@@ -261,7 +261,6 @@ const CustomerCare_Queries = () => {
 
                         <div id={Style.Dashboard_TicketWrapperDiv}>
 
-                            {/* <div id={Style.Ticket_HeaderDiv}> */}
 
                             <div id={Style.ticketButtonDiv}>
 
