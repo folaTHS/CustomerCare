@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Style from '../performance/Performance.module.css'
 import Header from '../../components/header/Header'
 import Progress_Bar from '../../components/progress_bar/Progress_Bar'
@@ -9,12 +9,27 @@ import sad from '../../assets/svg/sad.svg'
 import neutral from '../../assets/svg/neutral.svg'
 import { Link } from 'react-router-dom'
 import { PopupContextHook } from '../../PopupContext'
+import { getAgentPerformanceService } from '../../pages/api_detaills/services/query_services'
 
 
 
 const Performance = () => {
+    const [performanceData, setPerformanceData] = useState(null);
+    const {updateFilterPopup} = PopupContextHook();
 
-    const {updateFilterPopup} = PopupContextHook()
+    useEffect(() => {
+        // For testing, using agent ID 4 as shown in the API docs
+        getAgentPerformanceService(4)
+            .then(response => {
+                console.log("Performance Data:", response);
+                if (response.responseSuccessful) {
+                    setPerformanceData(response.responseBody);
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching performance:", error);
+            });
+    }, []);
 
     const trey = ()=>{
         updateFilterPopup(true)
@@ -78,7 +93,6 @@ const Performance = () => {
 
                         <div id={Style.Staff_details_Daily_CallDiv}>
                             <table>
-
                                 <tr>
                                     <td>Days</td>
                                     <td className={Style.Daily_CallText}>Calls</td>
@@ -86,59 +100,28 @@ const Performance = () => {
                                     <td className={Style.Daily_CallText}>Msg</td>
                                     <td></td>
                                 </tr>
-                                <tr>
-                                    <td>Monday</td>
-                                    <td className={Style.Daily_CallText}>46</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td> 
-                                        {/* <Link> */}
-                                    <button onClick={trey} style={{ backgroundColor: "transparent", cursor: "pointer", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button>
-                                    {/* </Link> */}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Tuesday</td>
-                                    <td className={Style.Daily_CallText}>22</td>
-                                    <td className={Style.Daily_CallText}>13</td>
-                                    <td className={Style.Daily_CallText}>13</td>
-                                    <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Wednesday</td>
-                                    <td className={Style.Daily_CallText}>45</td>
-                                    <td className={Style.Daily_CallText}>8</td>
-                                    <td className={Style.Daily_CallText}>8</td>
-                                    <td> <Link to={"/performanceDetails"}><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></Link></td>
-                                </tr>
-                                <tr>
-                                    <td>Thursday</td>
-                                    <td className={Style.Daily_CallText}>34</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td className={Style.Daily_CallText}>77</td>
-                                    <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Friday</td>
-                                    <td className={Style.Daily_CallText}>89</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Saturday</td>
-                                    <td className={Style.Daily_CallText}>33</td>
-                                    <td className={Style.Daily_CallText}>13</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                </tr>
-                                <tr>
-                                    <td>Sunday</td>
-                                    <td className={Style.Daily_CallText}>21</td>
-                                    <td className={Style.Daily_CallText}>5</td>
-                                    <td className={Style.Daily_CallText}>44</td>
-                                    <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                </tr>
+                                {performanceData && performanceData.dailyInteractions?.map((day, index) => (
+                                    <tr key={index}>
+                                        <td>{day.day}</td>
+                                        <td className={Style.Daily_CallText}>{day.calls}</td>
+                                        <td className={Style.Daily_CallText}>{day.mails}</td>
+                                        <td className={Style.Daily_CallText}>{day.messages}</td>
+                                        <td>
+                                            <button onClick={trey} style={{ 
+                                                backgroundColor: "transparent", 
+                                                cursor: "pointer", 
+                                                border: "none", 
+                                                color: "#0E093C", 
+                                                fontSize: "0.75rem", 
+                                                borderRadius: "0.5rem", 
+                                                height: "1.87rem", 
+                                                width: "5.12rem" 
+                                            }}>
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </table>
                         </div>
                     </div>

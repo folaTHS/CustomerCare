@@ -38,6 +38,16 @@ const Dashboard = () => {
         }
     });
 
+    const [dailyInteractions, setDailyInteractions] = useState({
+        Monday: { calls: 46, mails: 5, messages: 5 },
+        Tuesday: { calls: 22, mails: 13, messages: 13 },
+        Wednesday: { calls: 45, mails: 8, messages: 8 },
+        Thursday: { calls: 34, mails: 5, messages: 77 },
+        Friday: { calls: 89, mails: 5, messages: 5 },
+        Saturday: { calls: 33, mails: 13, messages: 5 },
+        Sunday: { calls: 21, mails: 5, messages: 44 }
+    });
+
 
 
     useEffect(() => {
@@ -60,24 +70,39 @@ const Dashboard = () => {
         });
 
         // Get metrics data
+        console.log("Starting metrics fetch...");
         getMetricsService()
             .then(response => {
-                if (response?.data?.responseBody) {
+                console.log("Raw API Response:", response);
+                if (response?.data?.responseSuccessful && response?.data?.responseBody) {
+                    const metrics = response.data.responseBody;
                     setQueryCount(prevState => ({
                         ...prevState,
                         performanceMetrics: {
-                            firstContactResolution: response.data.responseBody.customerSatisfactionRate?.replace('%', '') || 0,
-                            customerSatisfaction: response.data.responseBody.customerSatisfactionRate?.replace('%', '') || 0,
-                            resolutionTime: response.data.responseBody.averageResolutionTime?.replace('%', '') || 0,
-                            responseTime: response.data.responseBody.averageResponseTime?.replace('%', '') || 0
+                            firstContactResolution: metrics.averageResolutionTime?.replace('%', '') || '0',
+                            customerSatisfaction: metrics.customerSatisfactionRate?.replace('%', '') || '0',
+                            resolutionTime: metrics.averageResolutionTime?.replace('%', '') || '0',
+                            responseTime: metrics.averageResponseTime?.replace('%', '') || '0'
                         }
                     }));
+                    
+                    // Update daily interactions if available
+                    if (metrics.dailyInteractions) {
+                        setDailyInteractions(metrics.dailyInteractions);
+                    }
                 }
             })
             .catch(error => {
                 console.error("Metrics Error:", error);
+                updateErrorPopup(true);
+                updateErrorText("Failed to fetch performance metrics");
             });
     }, []);
+
+    // Also add a console log to see when the state updates
+    useEffect(() => {
+        console.log("Current Query Counts State:", queryCounts);
+    }, [queryCounts]);
 
     console.log("Current state:", queryCounts);
 
@@ -88,30 +113,54 @@ const Dashboard = () => {
     const incomingQueries = queryCounts.firstThreeIncomingQueries
 
 
-    const progressDiv = [
+    const performanceDiv = [
         {
             text: "Average First Contact Resolution Rate",
-            percent: `${queryCounts.performanceMetrics.firstContactResolution}%`,
+            percent: `${queryCounts.performanceMetrics?.firstContactResolution || 0}%`,
             infoText: "First contact resolution rate for customer queries"
         },
         {
             text: "Average Customer Satisfaction Rate", 
-            percent: `${queryCounts.performanceMetrics.customerSatisfaction}%`,
+            percent: `${queryCounts.performanceMetrics?.customerSatisfaction || 0}%`,
             infoText: "Overall customer satisfaction rating"
         },
         {
             text: "Average Resolution Time",
-            percent: `${queryCounts.performanceMetrics.resolutionTime}%`,
+            percent: `${queryCounts.performanceMetrics?.resolutionTime || 0}%`,
             infoText: "Average time taken to resolve queries"
         },
         {
             text: "Average Response Time",
-            percent: `${queryCounts.performanceMetrics.responseTime}%`, 
+            percent: `${queryCounts.performanceMetrics?.responseTime || 0}%`, 
             infoText: "Average initial response time for queries"
         }
     ]
 
-
+    // Update the table rendering to use the dailyInteractions state
+    const renderDailyInteractions = () => {
+        return Object.entries(dailyInteractions).map(([day, data]) => (
+            <tr key={day}>
+                <td>{day}</td>
+                <td className={Style.Daily_CallText}>{data.calls}</td>
+                <td className={Style.Daily_CallText}>{data.mails}</td>
+                <td className={Style.Daily_CallText}>{data.messages}</td>
+                <td>
+                    <button style={{ 
+                        backgroundColor: "transparent", 
+                        cursor: "pointer", 
+                        border: "none", 
+                        color: "#0E093C", 
+                        fontSize: "0.75rem", 
+                        borderRadius: "0.5rem", 
+                        height: "1.87rem", 
+                        width: "5.12rem" 
+                    }}>
+                        View Details
+                    </button>
+                </td>
+            </tr>
+        ));
+    };
 
     return (
         <div id={Style.CustomerCare_Dashboard_mainDiv}>
@@ -126,7 +175,7 @@ const Dashboard = () => {
                 <div id={Style.Dashboard_CardDiv}>
 
                     {
-                        progressDiv.map((obj, index) => {
+                        performanceDiv.map((obj, index) => {
 
                             return (
                                 <Progress_Bar
@@ -265,69 +314,7 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>Monday</td>
-                                        <td className={Style.Daily_CallText}>46</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td>
-                                            <button style={{ 
-                                                backgroundColor: "transparent", 
-                                                border: "none", 
-                                                color: "#0E093C", 
-                                                fontSize: "0.75rem", 
-                                                borderRadius: "0.5rem", 
-                                                height: "1.87rem", 
-                                                width: "5.12rem" 
-                                            }}>
-                                                View Details
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Tuesday</td>
-                                        <td className={Style.Daily_CallText}>22</td>
-                                        <td className={Style.Daily_CallText}>13</td>
-                                        <td className={Style.Daily_CallText}>13</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Wednesday</td>
-                                        <td className={Style.Daily_CallText}>45</td>
-                                        <td className={Style.Daily_CallText}>8</td>
-                                        <td className={Style.Daily_CallText}>8</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Thursday</td>
-                                        <td className={Style.Daily_CallText}>34</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td className={Style.Daily_CallText}>77</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Friday</td>
-                                        <td className={Style.Daily_CallText}>89</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Saturday</td>
-                                        <td className={Style.Daily_CallText}>33</td>
-                                        <td className={Style.Daily_CallText}>13</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Sunday</td>
-                                        <td className={Style.Daily_CallText}>21</td>
-                                        <td className={Style.Daily_CallText}>5</td>
-                                        <td className={Style.Daily_CallText}>44</td>
-                                        <td><button style={{ backgroundColor: "transparent", border: "none", color: "#0E093C", fontSize: "0.75rem", borderRadius: "0.5rem", height: "1.87rem", width: "5.12rem" }}>View Details</button></td>
-                                    </tr>
-
-
+                                    {renderDailyInteractions()}
                                 </tbody>
                             </table>
 
